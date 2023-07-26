@@ -1,6 +1,7 @@
 import csv
 import requests
 from bs4 import BeautifulSoup
+from tqdm import tqdm
 
 def scrape_game_data(url):
     game_list = []
@@ -9,6 +10,7 @@ def scrape_game_data(url):
     while True:
         page_url = f"{url}?page={page_num}"
         response = requests.get(page_url)
+
         if response.status_code != 200:
             break
 
@@ -18,7 +20,7 @@ def scrape_game_data(url):
         if not games_on_page:
             break
 
-        for game in games_on_page:
+        for game in tqdm(games_on_page, desc=f"Scraping page {page_num}"):
             game_name = game.find('a', class_='title game_link').text.strip()
             game_price_element = game.find('div', class_='price_value')
             game_price = game_price_element.text.strip() if game_price_element else 'N/A'
@@ -35,13 +37,12 @@ def save_to_csv(data, filename):
     with open(filename, 'w', newline='', encoding='utf-8-sig') as csvfile:
         csv_writer = csv.writer(csvfile)
         csv_writer.writerow(["Game_Name", "Game_Price", "Game_Genre", "Game_URL"])
-        for game in data:
-            csv_writer.writerow(game)
+        csv_writer.writerows(data)
 
 if __name__ == "__main__":
     url = "https://itch.io/games/made-with-pico-8"
     game_data = scrape_game_data(url)
     if game_data:
-        csv_filename = "games_data.csv"
+        csv_filename = "Pico8_games_data.csv"
         save_to_csv(game_data, csv_filename)
         print(f"Data scraped successfully and saved to {csv_filename}.")
